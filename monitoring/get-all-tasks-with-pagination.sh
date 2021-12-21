@@ -1,12 +1,18 @@
 #!/bin/bash
 
 #**************************************************************************************************************
-# Copyright © 2019-2020 Acronis International GmbH. This source code is distributed under MIT software license.
+# Copyright © 2019-2021 Acronis International GmbH. This source code is distributed under MIT software license.
 #**************************************************************************************************************
 
-. 00.basis_functions.sh
+# Full path of the current script
+THIS=$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo "$0")
 
-. 01.basic_api_checks.sh
+# The directory where current script resides
+DIR=$(dirname "${THIS}")
+
+. "${DIR}/../common/basis_functions.sh"
+
+. "${DIR}/../common/basic_api_checks.sh"
 
 # Page size
 _page_size=10

@@ -1,39 +1,54 @@
 # Base Acronis Cyber Platform API operations with bash
 
+!!! info Copyright © 2019-2021 Acronis International GmbH. This is distributed under MIT license.
+
 !!! note The GitHub repository contains not only code for this Hans-on Lab but other advanced code examples. Please, check [Code Directory](#code-directory) for details.
 
 [[TOC]]
 
 ## Code Directory
 
-|File name       |File description
-|-----------------------------------|--------------------------
-|`00.basis_functions.sh`    |Contains code basis functions to call the API: `_get_api_call_basic`,`_get_api_call_bearer`,`_get_api_call_bearer_with_response_code`, `_post_api_call_basic`, `_post_api_call_bearer` and `_put_api_call_bearer` as well as other utility functions described at the end of the manual. It's included in each file except `01.basic_api_checks.sh`.
-|`01.basic_api_checks.sh`    |Base sanity checks need to be performed before the API calls. It's included in each file except `00.basis_functions.sh`, `01.create-api-client.sh` and `02.issue_token.sh`.
-|`01.create-api-client.sh`   |Creates an API Client (`client_id`, `client_secret`) to generate a JWT token and access the API. The Basic Authentication is used. For Acronis Cyber Protect (Acronis Cyber Cloud 9.0) the Management Console can be used to create an API Client. The result of the script is stored in clear text `api_client.json` file. It's raw answer from the API call. For your solutions, please, implement secured storage for `client_id`, `client_secret` as they are credentials to access the API. The scrip asks for login and password to create an API Client.
-|`02.issue_token.sh`     |Issue a JWT token to access the API. The token is expired in 2 hours. During the sanity checks in `01.basic_api_checks.sh` an expiration time for the current token is checked and a token is reissued if needed. The result of the script is stored in clear text `api_token.json` file. It's raw answer from the API call. For your solutions, please, implement secured storage for a JWT token info as they are credentials to access the API.
-|`03.create-partner-tenant.sh`  |Creates a partner with name _MyBashPartner_ and enables all available offering items dor them for an edition, specified in json configuration files `cyber.platform.cfg.json` and  `cyber.platform.cfg.defaults.json`.
-|`04.create-customer-tenant.sh`  |Creates a customer for _MyBashPartner_ with name _MyBashCustomer_ and enables all available offering items dor them for an edition, specified in json configuration files `cyber.platform.cfg.json` and  `cyber.platform.cfg.defaults.json`.
-|`05.create-user-for-customer-activate.sh`   |Creates a user for _MyBashCustomer_ and activate them by setting a password. The script asks for username to create.
-|`06.get-tenant-usage.sh`    |Gets usage for the root tenant.
-|`07.create-report-retrieve.sh`  |Create an one time report to dave for the root tenant, wait till its creation and download.
-|`08.get-agent-installation-token.sh`|Create an Agent installation token for a user tenant.
-|`09.agent-installation.sh`|A sample to installing the Agent installation with no user prompts with default settings using an Agent installation token to register at the Acronis Cyber Cloud.
-|`10.get-all-agents-info.sh`|Get list of all Acronis Agents for tenants subtree where the root tenant is a tenant for which an API Client is created.
-|`11.get-all-agents-info-for-customer.sh`|Get list of all Acronis Agents for tenants subtree where the root tenant is a previously created customer.
-|`12.get-all-tasks-for-the-last-week.sh`|Get the list of all tasks competed during the last week.
-|`13.get-all-activities-for-the-last-week.sh`|Get the list of all activities competed during the last week.
-|`14.get-all-alerts-for-the-last-week.sh`|Get the list of all alerts competed during the last week.
-|`15.get-all-tasks-with-pagination.sh`|Get the list of all tasks with pagination.
-|`16.get-all-activities-with-pagination.sh`|Get the list of all activities with pagination.
-|`17.get-all-alerts-with-pagination.sh`|Get the list of all alerts with pagination.
-|`results`|The results of code-edition or code-writing exercises.
-|`images`|The images for this guide.
-|`pdf`|This guide rendered to PDF format.
-|`LICENSE`       |The license for the code. It's MIT license.
-|`README.md`       |This file.
-|`cyber.platform.cfg.defaults.json` |Contains default configuration values for the scripts. They are used when the values are not defined in `cyber.platform.cfg.json` file.
-|`cyber.platform.cfg.json`   |Contains configuration values for the scripts.
+|Folder name|File name       |File description
+|-----------------------------------|--------------------------|--------------------------
+|`common`|`basis_functions.sh`    |Contains code basis functions to call the API: `_get_api_call_basic`,`_get_api_call_bearer`,`_get_api_call_bearer_with_response_code`, `_post_api_call_basic`, `_post_api_call_bearer` and `_put_api_call_bearer` as well as other utility functions described at the end of the manual. It's included in each file except `basic_api_checks.sh`.
+|`common`|`basic_api_checks.sh`    |Base sanity checks need to be performed before the API calls. It's included in each file except `basis_functions.sh`, `create-api-client.sh` and `issue_token.sh`.
+|`authorization`|`create-api-client.sh`   |Creates an API Client (`client_id`, `client_secret`) to generate a JWT token and access the API. The Basic Authentication is used. For Acronis Cyber Protect (Acronis Cyber Cloud 9.0) the Management Console can be used to create an API Client. The result of the script is stored in clear text `api_client.json` file. It's raw answer from the API call. For your solutions, please, implement secured storage for `client_id`, `client_secret` as they are credentials to access the API. The scrip asks for login and password to create an API Client.
+|`authorization`|`issue_token.sh`     |Issue a JWT token to access the API. The token is expired in 2 hours. During the sanity checks in `basic_api_checks.sh` an expiration time for the current token is checked and a token is reissued if needed. The result of the script is stored in clear text `api_token.json` file. It's raw answer from the API call. For your solutions, please, implement secured storage for a JWT token info as they are credentials to access the API.
+|`authorization`|`issue-token-with-customer-scope-for-bc.sh`     |Exchange a JWT token to a customer-scoped token to access protection API functionality. The token is expired as soon as the base token expired. Required to have `customer.json` to exchange a token. Not renewed automatically. Requires to be issued for all operations with plans and resources as they expected to be executed in a customer context.
+|`tenants`|`create-partner-tenant.sh`  |Creates a partner with name _Partner.Bash.Examples.v3_ and enables all available offering items dor them for an edition, specified in json configuration files `cyber.platform.cfg.json` and  `cyber.platform.cfg.defaults.json`.
+|`tenants`|`create-customer-tenant.sh`  |Creates a customer for _Partner.Bash.Examples.v3_ with name _Customer.Bash.Examples.v3_ and enables all available offering items for them for an edition, specified in json configuration files `cyber.platform.cfg.json` and  `cyber.platform.cfg.defaults.json`.
+|`tenants`|`create-folder-tenant.sh`  |Creates a folder for _Partner.Bash.Examples.v3_ with name _Folder.Bash.Examples.v3_ and enables all available offering items for them for an edition, specified in json configuration files `cyber.platform.cfg.json` and  `cyber.platform.cfg.defaults.json`.
+|`users`|`create-user-for-customer-activate.sh`   |Creates a user for _Customer.Bash.Examples.v3_ and activate them by sending an e-mail. The script asks for a username and an e-mail to create.
+|`users`|`assign-customer-user-backup-role.sh`   | Assign a user of _Customer.Bash.Examples.v3_ the `backup_user` role.
+|`users`|`create-user-partner-customer-activate.sh`   |Creates a user for _Partner.Bash.Examples.v3_ and activate them by sending an e-mail. The script asks for a username and an e-mail to create.
+|`users`|`assign-partner-user-admin-role.sh`   | Assign a user of _Partner.Bash.Examples.v3_ the `partner_admin` role.
+|`usages`|`get-tenant-usage.sh`    |Gets usage for the root tenant.
+|`reports`|`create-report-retrieve.sh`  |Create an one time report to save for the root tenant, wait till its creation and download.
+|`reports`|`create-report-with-sku-retrieve.sh`  |Create an one time report for direct partners and SKU information included to save for the root tenant, wait till its creation and download.
+|`agent`|`get-agent-installation-token.sh`|Create an Agent installation token for a user tenant.
+|`agent`|`agent-installation.sh`|A sample to installing the Agent installation with no user prompts with default settings using an Agent installation token to register at the Acronis Cyber Cloud.
+|`agent`|`get-all-agents-info.sh`|Get list of all Acronis Agents for tenants subtree where the root tenant is a tenant for which an API Client is created.
+|`agent`|`get-all-agents-info-for-customer.sh`|Get list of all Acronis Agents for tenants subtree where the root tenant is a previously created customer.
+|`monitoring`|`get-all-tasks-for-the-last-week.sh`|Get the list of all tasks competed during the last week.
+|`monitoring`|`get-all-activities-for-the-last-week.sh`|Get the list of all activities competed during the last week.
+|`monitoring`|`get-all-alerts-for-the-last-week.sh`|Get the list of all alerts competed during the last week.
+|`monitoring`|`get-all-tasks-with-pagination.sh`|Get the list of all tasks with pagination.
+|`monitoring`|`get-all-activities-with-pagination.sh`|Get the list of all activities with pagination.
+|`monitoring`|`get-all-alerts-with-pagination.sh`|Get the list of all alerts with pagination.
+|`plans`|`get-all-plans-info.sh`|Get the list of all plans available in authorization scope.
+|`plans`|`create-a-backup-plan.sh`|Create a backup plan based on `base_plan.json` template.
+|`plans`|`base_plan.json`|A backup plan template.
+|`resources`|`create-dynamic-group.sh`|Create a dynamic group for resources.
+|`resources`|`create-static-group.sh`|Create a static group for resources.
+|`resources`|`delete-static-group.sh`|Delete a static group for resources.
+|`resources`|`get-all-resources-info.sh`|Get the list of all resources available in authorization scope.
+|`resources`|`get-all-resources-protection-statuses.sh`|Get protections statuses for all resources available in authorization scope.
+|`images`|`*.jpg`|The images for this guide.
+|`pdf`|`README.pdf`|This guide rendered to PDF format.
+| |`LICENSE`       |The license for the code. It's MIT license.
+| |`README.md`       |This file.
+| |`cyber.platform.cfg.defaults.json` |Contains default configuration values for the scripts. They are used when the values are not defined in `cyber.platform.cfg.json` file.
+| |`cyber.platform.cfg.json`   |Contains configuration values for the scripts.
 
 ## The Acronis Cyber Platform API general workflow
 
@@ -62,7 +77,7 @@ A `cyber.platform.cfg.json` file example:
  "base_url": "https://dev-cloud.acronis.com/",
  "partner_tenant": "partner",
  "customer_tenant": "customer",
- "edition": "per_workload"
+ "edition": "pck_per_workload"
 }
 ```
 
@@ -75,7 +90,7 @@ A `cyber.platform.cfg.defaults.json` file example:
  "base_url": "https://dev-cloud.acronis.com/",
  "partner_tenant": "partner",
  "customer_tenant": "customer",
- "edition": "per_workload",
+ "edition": "pck_per_workload",
  "trace": 0
 }
 ```
@@ -156,10 +171,9 @@ _post_api_call_basic "api/2/clients" \
 ### Step-by-step execution and checks
 
 1. Open any available `bash` environment: Linux, Mac or Windows with Windows Subsystem for Linux.
-2. Copy code directory to your local system and ensure that all `.sh` files are executable. Your directory listing should looks like bellow.
-![bash HoL directory](images/bash_001.jpg)
+2. Copy code directory to your local system and ensure that all `.sh` files in subdirectories are executable.
 3. Edit  `cyber.platform.cfg.json` file to enter your `base_url` aka your data center URL for API calls. All other options remain unchanged.
-4. Type `./01.c` and press `Tab`, it should autocomplete to the `./01.create-api-client.sh`.
+4. Type `cd /auth` and press `Tab`, it should autocomplete to the `cd /authorization`. Press `Enter`. Type `./cre` and press `Tab`, it should autocomplete to the `./create-api-client.sh`.
 5. Press `Enter`. You should see request for login. Type it and press `Enter`. You should see request for password. Type it and press `Enter`
 6. If you enter login and password correctly, the script just makes a series of API calls silently and exit. If you make a mistake, you receive a detailed error description. For example, below a `401 Unauthorized` error, which means your login or/and password are incorrect.
 ![401 Unauthorized](images/bash_002.jpg)
@@ -203,7 +217,6 @@ _post_api_call_basic "api/2/idp/token" \
 Assuming that the token is stored in the JSON response format as above, it can be done using the following functions set.
 
 `expires_on` is a time when the token will expire in Unix time format -- seconds from January 1, 1970. Here we assume that we will renew/refresh a token 15 minutes before the expiration time.
-
 
 ```bash
 # Issue an authorization token
@@ -260,12 +273,12 @@ _renew_token_if_needed() {
 
 ### Step-by-step execution and checks
 
-1. Type `./02` and press `Tab`, it should autocomplete to the `./02.issue_token.sh`.
+1. Type `./iss` and press `Tab`, it should autocomplete to the `./issue_token`, add `.sh` to have `./issue_token.sh`
 2. Press `Enter`. If `api_client.json` file exists and contains correct information, the script just makes a series of API calls silently and exit. If you make a mistake, you receive a detailed error description.
 3. Type `jq < api_token.json` and press `Enter`. You should see highlighted JSON file with a token information. If you can see something similar to picture bellow, you successfully issued a token and can follow to the next exercise.
 ![api_token.json](images/bash_004.jpg)
-4. Including `01.basic_api_checks.sh` file in each following scripts we ensure that a token will be reissued if needed before any API call.
-5. Check `01.basic_api_checks.sh` file to verify that you can understand implementation details described above.
+4. Including `common/basic_api_checks.sh` file in each following scripts we ensure that a token will be reissued if needed before any API call.
+5. Check `common/basic_api_checks.sh` file to verify that you can understand implementation details described above.
 
 ## Exercise 3: Create partner, customer and user tenants and set offering items
 
@@ -278,7 +291,7 @@ As we discussed above, before making a call to the actual API you need to ensure
 Assuming that we create the API client for our root tenant, we start from retrieving the API Client tenant information using GET request to `/clients/${_client_id}` end-point. Then, using received `tenant_id` information as a parameter and `kind` equal to `partner`, we build a JSON body for POST request to `/tenants` end-point to create the partner. Next, we are going to enable all applications and offering items for the tenants.  Briefly, we take all available offering items for the parent tenant of the partner or the customer using
 GET request to `/tenants/${_tenant_id}/offering_items/available_for_child` end-point with needed query parameters specifying `edition` and `kind` of the tenant. Then, we need to enable these offering items for the partner or the customer using PUT request to `/tenants/${_tenant_id}/offering_items` end-point with all offering items JSON in the request body and appropriate `_tenant_id`.
 
-!!! note The following `kind` values are supported `root`, `partner`, `folder`, `customer`, `unit`.
+!!! note The following `kind` values are supported `partner`, `folder`, `customer`, `unit`.
 
 ```bash
 # Call a function to pipe JSON from file, extract JSON property
@@ -431,9 +444,10 @@ Finally, we create a user for the customer. At first, we check if a login is ava
 # Set response code to 400 -- login availability check failed
 _response_code=400
 
-# Ask for proposed username
+# Ask for proposed username and e-mail to activate account
 printf "\n"
 read -rp 'Username: ' _username
+read -rp 'Please enter a valid email, it will be used for account activation: ' _email
 printf "\n\n"
 
 # To get an availability status of a username
@@ -459,7 +473,7 @@ _json='{
   "tenant_id": "'$_customer_tenant_id'",
   "login": "'${_username}'",
   "contact": {
-          "email": "'${_username}'@example.com",
+          "email": "'${_email}'",
           "firstname": "Bash",
           "lastname": "Example"
      }
@@ -477,29 +491,24 @@ _post_api_call_bearer "api/2/users" \
      "${_json}" > user.json
 ```
 
-A created user is not active. To activate them we can either send them an activation e-mail or set them a password. The sending of an activation e-mail is the preferable way, as in this case a user can set their own password by themselves. We use a set password way for demo purposes and a fake e-mail is used. To set a password we send a simple JSON and POST request to `/users/{_user_id}/password` end-point.
+A created user is not active. To activate them we can either send them an activation e-mail or set them a password. The sending of an activation e-mail is the preferable way, as in this case a user can set their own password by themselves.
 
 ```bash
 # Call a function to pipe JSON from file, extract JSON property
 _user_id=$(_get_id_from_file user.json)
 
-# Body JSON, to assign a password and activate the user
-# NEVER STORE A PASSWORD IN PLAIN TEXT FILE
-# THIS CODE IS FOR API DEMO PURPOSES ONLY
-# AS IT USES FAKE E-MAIL AND ACTIVATION E-MAIL CAN'T BE SENT
-_json='{
-    "password": "MyStrongP@ssw0rd"
-    }'
-
-# To activate a user by setting a password
+ To activate a user by sending an e-mail
 # POST API call using function defined in basis_functions.sh
 # with following parameters
 # $1 - an API endpoint to call
 # $2 - Content-Type
 # $3 - POST data
-_post_api_call_bearer "api/2/users/${_user_id}/password" \
-     "application/json" \
-     "${_json}"
+# NEED TO POST WITH EMPTY BODY
+# FOR SOME INTERNAL REST CALL IMPLEMENTATION REASON
+# AN ERROR IS OCCURRED WITHOUT EMPTY BODY
+_post_api_call_bearer "api/2/users/${_user_id}/send-activation-email" \
+                      "application/json" \
+                      ""
 ```
 
 At this point, we've created a partner, a customer, enable offering items for them, create a user and activate them.
@@ -508,9 +517,10 @@ At this point, we've created a partner, a customer, enable offering items for th
 
 #### Create partner and enable all available standard edition offering items
 
-1. Type `./03` and press `Tab`, it should autocomplete to the `./03.create-partner-tenant.sh`.
+1. Type `cd ..` and press `Enter`. You return to the main folder. Type `cd /ten` and press `Tab`, it should autocomplete to the `cd /tenants`. Type `./create-p` and press `Tab`, it should autocomplete to the `./create-partner-tenant.sh`.
 2. Press `Enter`. If `api_client.json` file exists and contains correct information, the script just makes a series of API calls silently and exit. If you make a mistake, you receive a detailed error description.
 3. Type `jq < partner.json` and press `Enter`. You should see highlighted JSON file with a partner information. If you can see something similar to picture bellow, you successfully created a partner.
+
 ![partner.json](images/bash_005.jpg)
 4. Type `jq < offering_items_available_for_child.json` and press `Enter`. You should see highlighted JSON file with a available for partner offering items information. Scroll down and look to possible values and fields.
 ![offering_items_available_for_child.json](images/bash_007.jpg)
@@ -519,7 +529,7 @@ At this point, we've created a partner, a customer, enable offering items for th
 
 #### Create customer, enable all available standard edition offering items and switch to production mode
 
-1. Type `./04` and press `Tab`, it should autocomplete to the `./04.create-customer-tenant.sh`.
+1. Type `./create-c` and press `Tab`, it should autocomplete to the `./create-customer-tenant.sh`.
 2. Press `Enter`. If `api_client.json` file exists and contains correct information, the script just makes a series of API calls silently and exit. If you make a mistake, you receive a detailed error description.
 3. Type `jq < customer.json` and press `Enter`. You should see highlighted JSON file with a customer information. If you can see something similar to picture bellow, you successfully created a customer.
 ![customer.json](images/bash_008.jpg)
@@ -529,27 +539,26 @@ At this point, we've created a partner, a customer, enable offering items for th
 6. Open the Management Portal and check that a new customer with name _MyBashCustomer_ was created under _MyBashPartner_ and for them all offering items for standard edition were enabled.
 ![Management Portal](images/bash_010.jpg)
 
-#### Create user, activate them by setting a password and enable backup services
+#### Create user, activate them by sending a e-mail and enable backup services
 
-1. Type `./05` and press `Tab`, it should autocomplete to the `./05.create-user-activate.sh`.
-2. Press `Enter`. You should see request for expected username. Type it and press `Enter`.
+1. Type `cd ..` and press `Enter`. You return to the main folder.  Type `cd /use` and press `Tab`, it should autocomplete to the `cd /users`. Press `Enter`. Type `./cre` and press `Tab`, it should autocomplete to the `./create-user-for-`, type `c`, press `Tab`, you should have `./create-user-for-customer-activate.sh`.
+2. Press `Enter`. You should see request for expected username and e-mail. Type them and press `Enter` each time.
 ![Username](images/bash_011.jpg)
 3. If `api_client.json` file exists and contains correct information, and a user with this username doesn't exists, the script just makes a series of API calls silently and exit. If a user with provided username exists or any other issue exists, you receive a detailed error description.
 ![User exists](images/bash_012.jpg)
 4. Type `jq < user.json` and press `Enter`. You should see highlighted JSON file with a user information. If you can see something similar to picture bellow, you successfully created and activated a user.
 ![User info](images/bash_013.jpg)
-5. Open the Management Portal and check that a new user with provided username was created  under _MyBashCustomer_ and it's in an active state.
+5. Wait till you receive activation e-mail and follow the activation procedure.
+6. Open the Management Portal and check that a new user with provided username was created  under _MyBashCustomer_ and it's in an active state.
 ![Management Portal](images/bash_014.jpg)
 
 !!! note The created user has no roles assigned. It means it can't use any service. To enable services/applications you need to assign an appropriate role to a user. In next steps you will create a bash script to assign the created user `backup_user` role to enable backup services.
-
-6. Copy `05.create-user-activate.sh` file to `08.assign-user-backup-role.sh` using following command `cp 05.create-user-activate.sh 08.assign-user-backup-role.sh`.
+6. Copy `create-user-for-customer-activate.sh` file to `my-assign-user-backup-role.sh` using following command `cp create-user-for-customer-activate.sh my-assign-user-backup-role.sh`.
 
 !!! note All operations with the user account roles are located under the `/users/{user_id}/access_policies` endpoint.
 
 !!! note To build a JSON to assign a role for a user `id` and user `personal_tenant_id` need to be known. All these values can be retrieved from the `user.json` file we've received as result of the user creation API call.
-
-7. In your preferred editor, open and edit the `08.assign-user-backup-role.sh`. In our following instructions `nano` editor is used. To open the file in `nano` editor, type `nano 08.assign-user-backup-role.sh` and press `Enter`.
+7. In your preferred editor, open and edit the `my-assign-user-backup-role.sh`. In our following instructions `nano` editor is used. To open the file in `nano` editor, type `nano my-assign-user-backup-role.sh` and press `Enter`.
 ![nano](images/bash_015.jpg)
 8. Find the following code in the file
 
@@ -561,7 +570,15 @@ _user_id=$(_get_id_from_file user.json)
 and move it (cut & paste) directly after the following code
 
 ```bash
-. 01.basic_api_checks.sh
+# Full path of the current script
+THIS=$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0)
+
+# The directory where current script resides
+DIR=$(dirname "${THIS}")
+
+. "${DIR}/../common/basis_functions.sh"
+
+. "${DIR}/../common/basic_api_checks.sh"
 ```
 
 9. Then `personal_tenant_id` should be retrieved from `user.json` file. As there are not helper functions for that, `jq` and `sed` will be used to retrieve. Enter the following code
@@ -597,9 +614,18 @@ You can find more information regarding JSON format in the API documentation htt
 12. Find the following code in the end of the file and copy it below the JSON
 
 ```bash
-_post_api_call_bearer "api/2/users/${_user_id}/password" \
-                                        "application/json" \
-                                        "${_json}"
+# To activate a user by sending an e-mail
+# POST API call using function defined in basis_functions.sh
+# with following parameters
+# $1 - an API endpoint to call
+# $2 - Content-Type
+# $3 - POST data
+# NEED TO POST WITH EMPTY BODY
+# FOR SOME INTERNAL REST CALL IMPLEMENTATION REASON
+# AN ERROR IS OCCURRED WITHOUT EMPTY BODY
+_post_api_call_bearer "api/2/users/${_user_id}/send-activation-email" \
+					  "application/json" \
+					  ""
 ```
 
 13. Edit this code to make appropriate `PUT` call
@@ -616,12 +642,18 @@ _put_api_call_bearer "api/2/users/${_user_id}/access_policies" \
 #!/bin/bash
 
 #**************************************************************************************************************
-# Copyright © 2019-2020 Acronis International GmbH. This source code is distributed under MIT software license.
+# Copyright © 2019-2021 Acronis International GmbH. This source code is distributed under MIT software license.
 #**************************************************************************************************************
 
-. 00.basis_functions.sh
+# Full path of the current script
+THIS=$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0)
 
-. 01.basic_api_checks.sh
+# The directory where current script resides
+DIR=$(dirname "${THIS}")
+
+. "${DIR}/../common/basis_functions.sh"
+
+. "${DIR}/../common/basic_api_checks.sh"
 
 # Call a function to pipe JSON from file, extract JSON property
 _user_id=$(_get_id_from_file user.json)
@@ -643,7 +675,7 @@ _put_api_call_bearer "api/2/users/${_user_id}/access_policies" \
                                         "${_json}"
 ```
 
-15. Save it. Exit the editor. Type `./08` and press `Tab`, it should autocomplete to the `./08.assign-user-backup-role.sh`.
+15. Save it. Exit the editor. Type `./my` and press `Tab`, it should autocomplete to the `./my-assign-user-backup-role.sh`.
 16. Press `Enter`. If `api_client.json` file exists and contains correct information, the script just makes a sAPI call and return current list of the user access policies and exit. If you make a mistake, you receive a detailed error description.
 ![Access policies](images/bash_016.jpg)
 17.  Open the Management Portal and check that the user has the assigned role.
@@ -655,7 +687,7 @@ _put_api_call_bearer "api/2/users/${_user_id}/access_policies" \
 
 A very common task is to check a tenant’s usage. It's a simple task. We just need to make a GET request to `/tenants/${_tenant_id}/usages` end-point, as result we receive a list with current usage information in JSON format.
 
-!!! warning The information about a service usage of the tenant, provided by the `/tenants/${_tenant_id}/usages` endpoint, is updated on average every 5-6 hours and must not be used for billing purposes.
+!!! warning The information about a service usage of the tenant, provided by the `/tenants/${_tenant_id}/usages` endpoint, is updated on average every 30 minutes and must not be used for billing purposes.
 
 ```bash
 # Get Root tenant_id for the API Client
@@ -675,7 +707,7 @@ _get_api_call_bearer "api/2/tenants/${_tenant_id}/usages" \
 
 ### Step-by-step execution and checks
 
-1. Type `./06` and press `Tab`, it should autocomplete to the `./06.get-tenant-usage.sh`.
+1. Type `cd ..` and press `Enter`. You return to the main folder.  Type `cd /usa` and press `Tab`, it should autocomplete to the `cd /usage`. Press `Enter`. Type `./get` and press `Tab`, it should autocomplete to the `./get-tenant-usage.sh`.
 2. Press `Enter`. If `api_client.json` file exists and contains correct information, the script just makes a series of API calls silently and exit. If you make a mistake, you receive a detailed error description.
 3. Type `jq < *_usage.json` and press `Enter`. You should see highlighted JSON file with a usage information. If you can see something similar to picture bellow, you successfully retrieve the usage.
 ![Usage](images/bash_017.jpg)
@@ -758,7 +790,7 @@ And finally, we download the report created using a GET request to
 # Download the report
 # The result is stored in "${_report_id}_report.csv" file
 # Response is gzip-ed so we need to add --compressed to have an output file decompressed
-# _base_url is loaded from config file in 00.basis_functions.sh
+# _base_url is loaded from config file in basis_functions.sh
 curl --compressed \
   -X GET \
   --url "${_base_url}api/2/reports/${_report_id}/stored/${_stored_report_id}" \
@@ -768,7 +800,7 @@ curl --compressed \
 
 ### Step-by-step execution and checks
 
-1. Type `./07` and press `Tab`, it should autocomplete to the `./07.create-report-retrieve.sh`.
+1. Type `cd ..` and press `Enter`. You return to the main folder.  Type `cd /rep` and press `Tab`, it should autocomplete to the `cd /reports`. Press `Enter`. Type `./cre` and press `Tab`, it should autocomplete to the `./create-report-retrieve.sh`.
 2. Press `Enter`. If `api_client.json` file exists and contains correct information, the script just makes a series of API calls silently and then download report. If you make a mistake, you receive a detailed error description.
 ![Download Report](images/bash_019.jpg)
 3. Type `jq < created_report.json` and press `Enter`. You should see highlighted JSON file with the crated report information. If you can see something similar to picture bellow, you successfully created the report.
@@ -778,7 +810,7 @@ curl --compressed \
 5. Type `cat *.csv` and press `Enter`. You should see the downloaded CSV report.
 ![CSV Report](images/bash_021.jpg)
 
-## Exercise 6: Add marks to your API calls for better support
+## Exercise 6: Check how to mark to your API calls for better support
 
 ### Implementation details
 
@@ -806,37 +838,23 @@ To implement it using our `bash` examples, we need just add the header to each c
 
 ### Step-by-step execution and checks
 
-1. Copy `00.basis_functions.sh` file to `00.basis_functions_with_user_agent.sh` using following command `cp 00.basis_functions.sh 00.basis_functions_with_user_agent.sh`.
-2. In your preferred editor, open and edit the `00.basis_functions_with_user_agent.sh`. In our following instructions `nano` editor is used. To open the file in `nano` editor, type `nano 00.basis_functions_with_user_agent.sh` and press `Enter`.
+1. Check `common/basis_functions.sh` file.
+2. In your preferred editor, open and check that `common/basis_functions.sh` contains User-Agent mark for each call. In our following instructions `nano` editor is used. To open the file in `nano` editor, type `nano common/basis_functions.sh` and press `Enter`.
 3. Find all the places in the file with
 
 ```bash
 -H "Accept: application/json" \
 ```
 
-and right after this line insert the following
+and right after this line check that there is the following
 
 ```bash
--H "User-Agent: Training/1.0 Acronis #CyberFit Developers Business Automation Training" \
+-H "User-Agent: ACP 3.0/Acronis Cyber Platform Bash Examples" \
 ```
 
-4. Save the file. Exit the editor.
-5. Rename `00.basis_functions.sh` file to `00.basis_functions_old.sh` using following command `mv 00.basis_functions.sh 00.basis_functions_old.sh`.
-6. Rename `00.basis_functions_with_user_agent.sh` file to `00.basis_functions.sh` using following command `mv 00.basis_functions_with_user_agent.sh 00.basis_functions.sh`.
-7. So now, you replace in all the code files, the basis functions without `User-Agent` to the functions with `User-Agent` header.
-
-!!! warning We will create an API Client in the next step for demo purposes only. Don't forget to delete it after the exercise.
-
-8. To check how our `User-Agent` affects an audit log you can see in the Management Portal, let's create a new API Client.
-9. Rename `api_client.json` file to `api_client_old.json` using following command `mv api_client.json api_client_old.json`. We ara planing to delete the new API Client, so we need to store our previous one.
-10. Type `./01.c` and press `Tab`, it should autocomplete to the `./01.create-api-client.sh`.
-11. Press `Enter`. You should see request for login. Type it and press `Enter`. You should see request for password. Type it and press `Enter`
-12. If you enter login and password correctly, the script just makes a series of API calls silently and exit. If you make a mistake, you receive a detailed error description. For example, below a `401 Unauthorized` error, which means your login or/and password are incorrect.
-13. Type `jq < api_client.json` and press `Enter`. You should see highlighted JSON file with an API Client information.
-14. Login to the Management Portal and check how our request are represented in the Audit log.
+4. Exit the editor.
+5. Login to the Management Portal and check how our request are represented in the Audit log.
 ![Audit Log](images/bash_023.jpg)
-
-!!! warning Don't forget to move the old client JSON file back and delete the new client if you don't plan to use it further.
 
 ## Summary
 
@@ -853,9 +871,9 @@ Now you know how to use base operations with the Acronis Cyber Platform API:
 
 Get started today, register on the [Acronis Developer Portal](https://developer.acronis.com/) and see the code samples available, you can also review solutions available in the [Acronis Cyber Cloud Solutions Portal](https://solutions.acronis.com/).
 
-## Appendix: Basis functions used in code
+## Appendix: Some basis functions used in code
 
-As you can see, to simplify code we created some basis functions to call the API. Below, you can find those functions with base descriptions
+As you can see, to simplify code we created some basis functions to call the API. Below, you can find some of that functions with base descriptions
 
 `_die` function is used to output error to the `STDERR` and stop the execution of scripts
 
@@ -1115,5 +1133,3 @@ _put_api_call_bearer () {
   }
 }
 ```
-
-!!! info Copyright © 2019-2020 Acronis International GmbH. This is distributed under MIT license.

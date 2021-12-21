@@ -5,3 +5,6 @@
 .vscode
 *.bin
 !pdf/*.pdf
+resources/add-device-to-static-group.sh
+Makefile
+!plans/base_plan.json

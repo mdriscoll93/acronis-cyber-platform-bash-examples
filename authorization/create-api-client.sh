@@ -1,10 +1,16 @@
 #!/bin/bash
 
 #**************************************************************************************************************
-# Copyright © 2019-2020 Acronis International GmbH. This source code is distributed under MIT software license.
+# Copyright © 2019-2021 Acronis International GmbH. This source code is distributed under MIT software license.
 #**************************************************************************************************************
 
-. 00.basis_functions.sh
+# Full path of the current script
+THIS=$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo "$0")
+
+# The directory where current script resides
+DIR=$(dirname "${THIS}")
+
+. "${DIR}/../common/basis_functions.sh"
 
 # Ask the user for login details
 # To use for Basic Authentication
@@ -29,7 +35,7 @@ _json='{
 		"tenant_id": '$_tenant_id',
 		"token_endpoint_auth_method": "client_secret_basic",
 		"data": {
-				"client_name": "Acronis.GitHub.Bash.Examples.v2"
+				"client_name": "Acronis.GitHub.Bash.Examples.v3"
 				}
 	  }'
 
@@ -43,4 +49,4 @@ _json='{
 _post_api_call_basic "api/2/clients" \
 					"${_login}" "${_password}" \
 					"${_json}" \
-					"application/json" > api_client.json
+					"application/json" > "${DIR}/../api_client.json"

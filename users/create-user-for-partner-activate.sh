@@ -1,19 +1,26 @@
 #!/bin/bash
 
 #**************************************************************************************************************
-# Copyright © 2019-2020 Acronis International GmbH. This source code is distributed under MIT software license.
+# Copyright © 2019-2021 Acronis International GmbH. This source code is distributed under MIT software license.
 #**************************************************************************************************************
 
-. 00.basis_functions.sh
+# Full path of the current script
+THIS=$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo "$0")
 
-. 01.basic_api_checks.sh
+# The directory where current script resides
+DIR=$(dirname "${THIS}")
+
+. "${DIR}/../common/basis_functions.sh"
+
+. "${DIR}/../common/basic_api_checks.sh"
 
 # Set response code to 400 -- login availability check failed
 _response_code=400
 
-# Ask for proposed username
+# Ask for proposed username and e-mail to activate account
 printf "\n"
 read -rp 'Username: ' _username
+read -rp 'Please enter a valid email, it will be used for account activation: ' _email
 printf "\n\n"
 
 # To get an availability status of a username
@@ -32,15 +39,15 @@ _get_api_call_bearer_with_response_code "api/2/users/check_login?username=${_use
 # Here we can be only if _username is available
 
 # Call a function to pipe JSON from file, extract JSON property
-_customer_tenant_id=$(_get_id_from_file customer.json)
+_partner_tenant_id=$(_get_id_from_file "${DIR}/../partner.json")
 
 
 # Construct JSON to request a user creation
 _json='{
-		"tenant_id": "'$_customer_tenant_id'",
+		"tenant_id": "'${_partner_tenant_id}'",
 		"login": "'${_username}'",
 		"contact": {
-      				"email": "'${_username}'@example.com"
+      				"email": "'${_email}'"
 					}
 	  }'
 
@@ -53,25 +60,20 @@ _json='{
 # The result is stored in user.json file
 _post_api_call_bearer "api/2/users" \
 					"application/json" \
-					"${_json}" > user.json
+					"${_json}" > "${DIR}/../partner_user.json"
 
 # Call a function to pipe JSON from file, extract JSON property
-_user_id=$(_get_id_from_file user.json)
+_user_id=$(_get_id_from_file "${DIR}/../partner_user.json")
 
-# Body JSON, to assign a password and activate the user
-# NEVER STORE A PASSWORD IN PLAIN TEXT FILE
-# THIS CODE IS FOR API DEMO PURPOSES ONLY
-# AS IT USES FAKE E-MAIL AND ACTIVATION E-MAIL CAN'T BE SENT
-_json='{
-  		"password": "MyStrongP@ssw0rd"
-	   }'
-
-# To activate a user by setting a password
+# To activate a user by sending an e-mail
 # POST API call using function defined in basis_functions.sh
 # with following parameters
 # $1 - an API endpoint to call
 # $2 - Content-Type
 # $3 - POST data
-_post_api_call_bearer "api/2/users/${_user_id}/password" \
-					"application/json" \
-					"${_json}"
+# NEED TO POST WITH EMPTY BODY
+# FOR SOME INTERNAL REST CALL IMPLEMENTATION REASON
+# AN ERROR IS OCCURRED WITHOUT EMPTY BODY
+_post_api_call_bearer "api/2/users/${_user_id}/send-activation-email" \
+					  "application/json" \
+					  ""

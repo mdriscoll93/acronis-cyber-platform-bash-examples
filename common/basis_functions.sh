@@ -455,7 +455,7 @@ _issue_token() {
 							"grant_type=client_credentials" \
 							"application/x-www-form-urlencoded" > "${DIR}/../api_token.json"
 
-		# If we have bc token issued before we need to re-issue them as well
+		# If we have Scoped access token issued before we need to re-issue them as well
 		if test -f "${DIR}/../api_token_customer_scope.json" ; then
 			# Call a function to pipe JSON from file, extract JSON property
 			# Expect that if we have api_token_customer_scope.json we have customer.json
@@ -475,7 +475,7 @@ _issue_token() {
 			# $4 - urlencoded data 2st param
 			# $5 - urlencoded data 3st param
 			# The result is stored in api_token_customer_scope.json file
-			_post_api_call_bearer_urlencoded "bc/idp/token" \
+			_post_api_call_bearer_urlencoded "api/2/idp/token" \
 								"application/x-www-form-urlencoded" \
 								"grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer"  \
 								"assertion=${_access_token}"  \
